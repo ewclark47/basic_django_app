@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Create Account | Basic Django App</title>
+    <style>
+        body { background: #f0f0f0; font-family: Arial, sans-serif; }
+        .create-container {
+            width: 340px;
+            margin: 100px auto;
+            background: #fff;
+            border: 1px solid #e0e0e0;
+            border-radius: 6px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+            padding: 32px 24px 24px 24px;
+        }
+        h1 { font-size: 1.5em; margin-bottom: 1em; color: #444; }
+        .form-row { margin-bottom: 1em; }
+        label { display: block; margin-bottom: 0.3em; color: #333; }
+        input[type="text"], input[type="password"] {
+            width: 100%;
+            padding: 8px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            font-size: 1em;
+        }
+        .error { color: #ba2121; margin-bottom: 1em; }
+        button {
+            width: 100%;
+            padding: 10px;
+            background: #0c4b8f;
+            color: #fff;
+            border: none;
+            border-radius: 4px;
+            font-size: 1em;
+            cursor: pointer;
+        }
+        button:hover { background: #1558b0; }
+        .back-link { display: block; margin-top: 1em; text-align: center; color: #0c4b8f; text-decoration: none; }
+    </style>
+</head>
+<body>
+    <div class="create-container">
+        <h1>Create Account</h1>
+        {% if error %}<div class="error">{{ error }}</div>{% endif %}
+        <form method="post">
+            {% csrf_token %}
+            <div class="form-row">
+                <label for="id_username">Username:</label>
+                <input type="text" name="username" id="id_username" required autofocus>
+            </div>
+            <div class="form-row">
+                <label for="id_password">Password:</label>
+                <input type="password" name="password" id="id_password" required>
+            </div>
+            <button type="submit">Create Account</button>
+        </form>
+        <a href="/" class="back-link">Back to Login</a>
+    </div>
+</body>
+</html>
