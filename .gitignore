@@ -3,3 +3,5 @@
 .vscode
 .github
 db.sqlite3
+.env*
+media/*

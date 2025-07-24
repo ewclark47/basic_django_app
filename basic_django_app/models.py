@@ -1,6 +1,19 @@
 from django.db import models
 from django.contrib.auth.models import User
 
+class Profile(models.Model):
+    user = models.OneToOneField(User, on_delete=models.CASCADE, related_name='profile')
+    display_name = models.CharField(max_length=100, blank=True)
+    profile_picture = models.ImageField(upload_to='profile_pics/', blank=True, null=True)
+
+    def get_display_name(self):
+        if self.display_name:
+            return self.display_name
+        elif self.user.first_name:
+            return self.user.first_name
+        else:
+            return self.user.username
+
 class UserSentimentPreference(models.Model):
     user = models.OneToOneField(User, on_delete=models.CASCADE, related_name='sentiment_preference')
     positive_views = models.PositiveIntegerField(default=0)

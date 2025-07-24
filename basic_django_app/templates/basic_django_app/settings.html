@@ -1,0 +1,66 @@
+{% extends 'basic_django_app/base.html' %}
+{% block content %}
+<div style="max-width: 480px; margin: 0 auto; background: #fff; border-radius: 10px; box-shadow: 0 2px 12px rgba(0,0,0,0.07); padding: 32px 28px;">
+    <h2 style="margin-top: 0; margin-bottom: 24px; font-size: 1.5em; font-weight: 600; color: #0c4b8f;">Account Settings</h2>
+    <form method="post" enctype="multipart/form-data" style="display: flex; flex-direction: column; gap: 24px;" id="settingsForm">
+        {% csrf_token %}
+        <div style="display: flex; align-items: center; gap: 24px;">
+            <div style="position: relative;">
+                <div id="profilePicPreviewContainer">
+                    {% if profile_picture_url %}
+                        <img id="profilePicPreview" src="{{ profile_picture_url }}" alt="Profile Picture" style="width: 90px; height: 90px; object-fit: cover; border-radius: 50%; background: #e0e0e0;">
+                    {% else %}
+                        <div id="profilePicPreview" style="width: 90px; height: 90px; object-fit: cover; border-radius: 50%; background: #e0e0e0; display: flex; align-items: center; justify-content: center; color: #888; font-size: 2em;">?</div>
+                    {% endif %}
+                </div>
+                <label for="profile_picture" style="position: absolute; bottom: 0; right: 0; background: #0c4b8f; color: #fff; border-radius: 50%; width: 32px; height: 32px; display: flex; align-items: center; justify-content: center; cursor: pointer; border: 2px solid #fff; box-shadow: 0 2px 8px rgba(0,0,0,0.10); font-size: 1.3em;">
+                    &#43;
+                </label>
+                <input type="file" name="profile_picture" id="profile_picture" style="display: none;">
+            </div>
+            <div style="flex: 1;">
+                <div style="margin-bottom: 16px;">
+                    <label for="display_name" style="font-weight: 500; color: #0c4b8f;">Display Name</label>
+                    <input type="text" name="display_name" id="display_name" value="{{ profile.display_name }}" style="width: 100%; padding: 8px; border-radius: 6px; border: 1px solid #ccc; margin-top: 4px;">
+                </div>
+                <div style="margin-bottom: 16px;">
+                    <label for="first_name" style="font-weight: 500; color: #0c4b8f;">First Name</label>
+                    <input type="text" name="first_name" id="first_name" value="{{ user.first_name }}" style="width: 100%; padding: 8px; border-radius: 6px; border: 1px solid #ccc; margin-top: 4px;">
+                </div>
+                <div>
+                    <label for="last_name" style="font-weight: 500; color: #0c4b8f;">Last Name</label>
+                    <input type="text" name="last_name" id="last_name" value="{{ user.last_name }}" style="width: 100%; padding: 8px; border-radius: 6px; border: 1px solid #ccc; margin-top: 4px;">
+                </div>
+            </div>
+        </div>
+        <button type="submit" style="background: #0c4b8f; color: #fff; border: none; border-radius: 6px; padding: 10px 0; font-size: 1.1em; font-weight: 500; cursor: pointer; margin-top: 12px;">Save Changes</button>
+    </form>
+</div>
+<script>
+    // Profile picture preview
+    const profileInput = document.getElementById('profile_picture');
+    const previewContainer = document.getElementById('profilePicPreviewContainer');
+    profileInput.addEventListener('change', function(e) {
+        const file = e.target.files[0];
+        if (file) {
+            const reader = new FileReader();
+            reader.onload = function(ev) {
+                let img = document.getElementById('profilePicPreview');
+                if (!img) {
+                    img = document.createElement('img');
+                    img.id = 'profilePicPreview';
+                    img.style.width = '90px';
+                    img.style.height = '90px';
+                    img.style.objectFit = 'cover';
+                    img.style.borderRadius = '50%';
+                    img.style.background = '#e0e0e0';
+                    previewContainer.innerHTML = '';
+                    previewContainer.appendChild(img);
+                }
+                img.src = ev.target.result;
+            };
+            reader.readAsDataURL(file);
+        }
+    });
+</script>
+{% endblock %}

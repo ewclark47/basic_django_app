@@ -1,94 +1,8 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <title>Welcome | Basic Django App</title>
-    <style>
-        body { margin: 0; font-family: Arial, sans-serif; background: #f0f0f0; }
-        .top-bar {
-            width: 100%;
-            background: #0c4b8f;
-            color: #fff;
-            padding: 0 24px;
-            height: 56px;
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            box-sizing: border-box;
-        }
-        .app-title { font-size: 1.2em; font-weight: bold; }
-        .user-menu {
-            position: relative;
-            display: inline-block;
-        }
-        .user-circle {
-            width: 36px;
-            height: 36px;
-            background: #fff;
-            color: #0c4b8f;
-            border-radius: 50%;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 1.2em;
-            font-weight: bold;
-            cursor: pointer;
-            transition: background 0.2s;
-        }
-        .user-circle:hover {
-            background: #e0e0e0;
-        }
-        .dropdown {
-            display: none;
-            position: absolute;
-            right: 0;
-            top: 44px;
-            background: #fff;
-            min-width: 120px;
-            box-shadow: 0 2px 8px rgba(0,0,0,0.12);
-            border-radius: 6px;
-            z-index: 100;
-        }
-        .dropdown a {
-            color: #0c4b8f;
-            padding: 12px 16px;
-            text-decoration: none;
-            display: block;
-            border-bottom: 1px solid #f0f0f0;
-        }
-        .dropdown a:last-child { border-bottom: none; }
-        .dropdown a:hover { background: #f0f0f0; }
-        .show { display: block; }
-        .main-content { padding: 40px 24px; }
-        .notification {
-            background: #e0f7fa;
-            color: #00796b;
-            border: 1px solid #b2ebf2;
-            border-radius: 4px;
-            padding: 12px 16px;
-            margin: 24px auto 0 auto;
-            max-width: 400px;
-            text-align: center;
-        }
-    </style>
-</head>
-<body>
-    <div class="top-bar">
-        <div class="app-title">Basic Django App</div>
-        <div class="user-menu">
-            <div class="user-circle" id="userCircle">{{ user.username|first|upper }}</div>
-            <div class="dropdown" id="dropdownMenu">
-                <a href="#">Settings</a>
-                <a href="{% url 'logout' %}">Log Out</a>
-            </div>
-        </div>
-    </div>
-    {% if message %}
-    <div class="notification">{{ message }}</div>
-    {% endif %}
-    <div class="main-content" style="display: flex; gap: 32px; align-items: flex-start;">
+{% extends 'basic_django_app/base.html' %}
+{% block content %}
+    <div style="display: flex; gap: 32px; align-items: flex-start;">
         <div style="flex: 1;">
-            <h1>Welcome to Basic Django App, {{ user.username }}!</h1>
+            <h1>Welcome to Basic Django App, {{ display_name }}!</h1>
             <h2>Blog Posts</h2>
             <form method="get" style="margin-bottom: 18px; display: flex; gap: 12px; align-items: center;">
                 <label for="sort">Sort by:</label>
@@ -186,7 +100,7 @@
                         </div>
                     </div>
                     {% if post.post.author == user %}
-                    <form method="post" style="position: absolute; top: 12px; right: 12px;">
+                    <form method="post" style="position: absolute; top: 12px; right: 12px;" onsubmit="return confirm('Are you sure you want to permanently delete this post? This action cannot be undone.');">
                         {% csrf_token %}
                         <input type="hidden" name="action" value="delete_post">
                         <input type="hidden" name="post_id" value="{{ post.post.id }}">
@@ -226,17 +140,8 @@
             </div>
         </div>
     </div>
+{% endblock %}
     <script>
-        const userCircle = document.getElementById('userCircle');
-        const dropdownMenu = document.getElementById('dropdownMenu');
-        userCircle.addEventListener('click', function(e) {
-            dropdownMenu.classList.toggle('show');
-        });
-        document.addEventListener('click', function(e) {
-            if (!userCircle.contains(e.target) && !dropdownMenu.contains(e.target)) {
-                dropdownMenu.classList.remove('show');
-            }
-        });
         // Blog post modal logic
         const plusBtn = document.getElementById('plusBtn');
         const modalBg = document.getElementById('modalBg');
@@ -253,46 +158,6 @@
         modalBg.addEventListener('click', function() {
             modalBg.style.display = 'none';
             modalForm.style.display = 'none';
-        });
-        // Show more comments functionality
-        document.querySelectorAll('.toggle-comments').forEach(function(btn) {
-            btn.addEventListener('click', function() {
-                const postId = btn.getAttribute('data-post-id');
-                const section = document.getElementById('comments-' + postId);
-                if (section.style.display === 'none' || section.style.display === '') {
-                    section.style.display = 'block';
-                    btn.textContent = 'Hide Comments';
-                } else {
-                    section.style.display = 'none';
-                    btn.textContent = 'Show Comments';
-                }
-            });
-        });
-        // Set initial button text for open comments
-        document.querySelectorAll('.toggle-comments').forEach(function(btn) {
-            const postId = btn.getAttribute('data-post-id');
-            const section = document.getElementById('comments-' + postId);
-            if (section.style.display === 'block') {
-                btn.textContent = 'Hide Comments';
-            }
-        });
-        document.querySelectorAll('.show-more-comments').forEach(function(btn) {
-            btn.addEventListener('click', function() {
-                const postId = btn.getAttribute('data-post-id');
-                let shown = parseInt(btn.getAttribute('data-shown'));
-                const comments = document.querySelectorAll('#comments-' + postId + ' .comment-item');
-                let next = shown;
-                let count = 0;
-                for (let i = next; i < comments.length && count < 3; i++, count++) {
-                    comments[i].style.display = '';
-                    next++;
-                }
-                if (next >= comments.length) {
-                    btn.style.display = 'none';
-                } else {
-                    btn.setAttribute('data-shown', next);
-                }
-            });
         });
     </script>
 </body>
