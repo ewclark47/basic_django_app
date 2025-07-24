@@ -16,7 +16,9 @@ def index(request):
             body = request.POST.get('body')
             tags = request.POST.get('tags')
             if title and body:
-                BlogPost.objects.create(title=title, body=body, tags=tags or '', author=request.user)
+                from .sentiment import analyze_sentiment
+                sentiment = analyze_sentiment(f"{title}\n{body}")
+                BlogPost.objects.create(title=title, body=body, tags=tags or '', author=request.user, sentiment=sentiment)
                 return redirect('/')
         # Handle blog post deletion
         if request.method == 'POST' and request.POST.get('action', '') == 'delete_post':
@@ -59,6 +61,27 @@ def index(request):
             posts_qs = sorted(posts_qs, key=lambda p: p.likes_dislikes.filter(value=1).count(), reverse=True)
         elif sort == 'most_disliked':
             posts_qs = sorted(posts_qs, key=lambda p: p.likes_dislikes.filter(value=-1).count(), reverse=True)
+        elif sort == 'trending':
+            posts_qs = sorted(posts_qs, key=lambda p: (
+                p.likes_dislikes.count() + p.comments.count()
+            ), reverse=True)
+        elif sort == 'for_you' and request.user.is_authenticated:
+            from .models import UserSentimentPreference
+            liked_authors = list(request.user.liked_authors.values_list('author_id', flat=True))
+            liked_tags = list(request.user.liked_tags.values_list('tag', flat=True))
+            pref, _ = UserSentimentPreference.objects.get_or_create(user=request.user)
+            preferred_sentiment = pref.get_preferred_sentiment()
+            def for_you_score(post):
+                score = 0
+                if post.author_id in liked_authors:
+                    score += 1000  # Priority for liked authors
+                if any(tag.strip() in liked_tags for tag in post.tags.split(',')):
+                    score += 10
+                if post.sentiment == preferred_sentiment:
+                    score += 100  # Strong preference for sentiment
+                score += post.likes_dislikes.filter(value=1).count()  # Tie-breaker: likes
+                return -score  # Negative for descending sort
+            posts_qs = sorted(posts_qs, key=for_you_score)
         else:
             posts_qs = posts_qs.order_by('-created_at')
         open_comments = request.GET.get('open_comments')
@@ -84,6 +107,15 @@ def index(request):
                 })
             user_like = None
             if request.user.is_authenticated:
+                from .models import UserSentimentPreference
+                pref, _ = UserSentimentPreference.objects.get_or_create(user=request.user)
+                if post.sentiment == 'positive':
+                    pref.positive_views += 1
+                elif post.sentiment == 'negative':
+                    pref.negative_views += 1
+                else:
+                    pref.neutral_views += 1
+                pref.save(update_fields=['positive_views', 'negative_views', 'neutral_views'])
                 try:
                     user_like = LikeDislike.objects.get(user=request.user, post=post).value
                 except LikeDislike.DoesNotExist:
@@ -95,6 +127,7 @@ def index(request):
                 'comments': comments,
                 'user_like': user_like,
                 'open_comments': str(post.id) == open_comments,
+                'sentiment': post.sentiment,
             })
         return render(request, 'basic_django_app/home.html', {
             'user': request.user,
